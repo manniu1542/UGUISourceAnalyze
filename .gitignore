@@ -1,21 +1,21 @@
-Unity/Library/
-Unity/Library
-Unity/obj/
-Unity/obj
-Unity/Temp/
-Unity/Temp
-Unity/Logs
-Unity/Logs/
-Unity/UserSettings
-Unity/UserSettings/
-Unity/.vs
-Unity/.vs/
+Library/
+Library
+obj/
+obj
+Temp/
+Temp
+Logs
+Logs/
+UserSettings
+UserSettings/
+.vs
+.vs/
 
-Unity/.vsconfig
-Unity/Assembly-CSharp.csproj
-Unity/Assembly-CSharp.csproj.user
-Unity/Assembly-CSharp-Editor.csproj
-Unity/UGUISourceAnalyze.sln
+.vsconfig
+Assembly-CSharp.csproj
+Assembly-CSharp.csproj.user
+Assembly-CSharp-Editor.csproj
+UGUISourceAnalyze.sln
 
 
 
