@@ -182,6 +182,11 @@ namespace UnityEngine.UI
             if (currentEventCamera != null)
                 ray = currentEventCamera.ScreenPointToRay(eventPosition);
             //在（renderMode）相机ui以及 物理世界ui中   可以   选择剔除 符合（BlockingMask）标签的    （blockingObjects） 2d以及 3d的碰撞物体  
+            if(Input.anyKeyDown)
+            {
+                //Debug.Log(222);
+            }
+
             if (canvas.renderMode != RenderMode.ScreenSpaceOverlay && blockingObjects != BlockingObjects.None)
             {
                 float distanceToClipPlane = 100.0f;

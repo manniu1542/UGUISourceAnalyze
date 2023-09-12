@@ -88,7 +88,7 @@ namespace UnityEngine.UI
                     totalFlexible += flexible;
                 }
             }
-
+            //最后一个间隔 给扣除掉
             if (!alongOtherAxis && rectChildren.Count > 0)
             {
                 totalMin -= spacing;
@@ -143,13 +143,15 @@ namespace UnityEngine.UI
                 if (GetTotalMinSize(axis) != GetTotalPreferredSize(axis))
                     minMaxLerp = Mathf.Clamp01((size - GetTotalMinSize(axis)) / (GetTotalPreferredSize(axis) - GetTotalMinSize(axis)));
 
+
+                //size - GetTotalPreferredSize(axis) 抛出已经占用的 大小      ，，itemFlexibleMultiplier 均分 其余占比
                 float itemFlexibleMultiplier = 0;
                 if (size > GetTotalPreferredSize(axis))
                 {
                     if (GetTotalFlexibleSize(axis) > 0)
                         itemFlexibleMultiplier = (size - GetTotalPreferredSize(axis)) / GetTotalFlexibleSize(axis);
                 }
-
+                
                 for (int i = 0; i < rectChildren.Count; i++)
                 {
                     RectTransform child = rectChildren[i];

@@ -711,12 +711,12 @@ namespace UnityEngine.UI
 
         private void PreserveSpriteAspectRatio(ref Rect rect, Vector2 spriteSize)
         {
-            var spriteRatio = spriteSize.x / spriteSize.y;  
-            var rectRatio = rect.width / rect.height;   
+            var spriteRatio = spriteSize.x / spriteSize.y;
+            var rectRatio = rect.width / rect.height;
 
             if (spriteRatio > rectRatio)
             {
-                var oldHeight = rect.height;    
+                var oldHeight = rect.height;
                 rect.height = rect.width * (1.0f / spriteRatio);
                 rect.y += (oldHeight - rect.height) * rectTransform.pivot.y;
             }
@@ -728,7 +728,7 @@ namespace UnityEngine.UI
             }
         }
 
-        /// Image's dimensions used for drawing. X = left, Y = bottom, Z = right, W = top.
+        /// Image's dimensions used for drawing. X = left, Y = bottom, Z = right, W = top.   获取渲染uv的左下和右上角信息
         private Vector4 GetDrawingDimensions(bool shouldPreserveAspect)
         {
             var padding = activeSprite == null ? Vector4.zero : Sprites.DataUtility.GetPadding(activeSprite);
@@ -862,17 +862,18 @@ namespace UnityEngine.UI
         /// </summary>
         void GenerateSimpleSprite(VertexHelper vh, bool lPreserveAspect)
         {
-
+            //获取 uv 
             Vector4 v = GetDrawingDimensions(lPreserveAspect);
             var uv = (activeSprite != null) ? Sprites.DataUtility.GetOuterUV(activeSprite) : Vector4.zero;
 
             var color32 = color;
             vh.Clear();
+            // 添加 图片的 顶点
             vh.AddVert(new Vector3(v.x, v.y), color32, new Vector2(uv.x, uv.y));
             vh.AddVert(new Vector3(v.x, v.w), color32, new Vector2(uv.x, uv.w));
             vh.AddVert(new Vector3(v.z, v.w), color32, new Vector2(uv.z, uv.w));
             vh.AddVert(new Vector3(v.z, v.y), color32, new Vector2(uv.z, uv.y));
-
+            // 使用这些顶点组成 绘制 网格的 三角面
             vh.AddTriangle(0, 1, 2);
             vh.AddTriangle(2, 3, 0);
 
@@ -935,9 +936,13 @@ namespace UnityEngine.UI
 
             if (activeSprite != null)
             {
+                //得到 相对坐标 图片的左下到右上
                 outer = Sprites.DataUtility.GetOuterUV(activeSprite);
+                //得到 相对坐标 图片的border 左下到右上
                 inner = Sprites.DataUtility.GetInnerUV(activeSprite);
+                //图片的偏移量 一般是0
                 padding = Sprites.DataUtility.GetPadding(activeSprite);
+                //得到 实际的border信息
                 border = activeSprite.border;
             }
             else
@@ -949,15 +954,18 @@ namespace UnityEngine.UI
             }
 
             Rect rect = GetPixelAdjustedRect();
-            Vector4 adjustedBorders = GetAdjustedBorders(border / pixelsPerUnit, rect);
+            Vector4 adjustedBorders = GetAdjustedBorders(border / pixelsPerUnit, rect);//动态修改九宫格 的border 左下角 和右上角的 数值
             padding = padding / pixelsPerUnit;
 
-            s_VertScratch[0] = new Vector2(padding.x, padding.y);
-            s_VertScratch[3] = new Vector2(rect.width - padding.z, rect.height - padding.w);
+            s_VertScratch[0] = new Vector2(padding.x, padding.y);//九宫格 左下角
 
+            s_VertScratch[3] = new Vector2(rect.width - padding.z, rect.height - padding.w);//九宫格 右上角角
+
+            //九宫格 border左下角
             s_VertScratch[1].x = adjustedBorders.x;
             s_VertScratch[1].y = adjustedBorders.y;
 
+            //九宫格 border右上角
             s_VertScratch[2].x = rect.width - adjustedBorders.z;
             s_VertScratch[2].y = rect.height - adjustedBorders.w;
 
@@ -966,8 +974,9 @@ namespace UnityEngine.UI
                 s_VertScratch[i].x += rect.x;
                 s_VertScratch[i].y += rect.y;
             }
-
+            //获取uv的 九宫格 左下角
             s_UVScratch[0] = new Vector2(outer.x, outer.y);
+            //获取uv的 border 左下角
             s_UVScratch[1] = new Vector2(inner.x, inner.y);
             s_UVScratch[2] = new Vector2(inner.z, inner.w);
             s_UVScratch[3] = new Vector2(outer.z, outer.w);
@@ -1011,6 +1020,8 @@ namespace UnityEngine.UI
                 inner = Sprites.DataUtility.GetInnerUV(activeSprite);
                 border = activeSprite.border;
                 spriteSize = activeSprite.rect.size;
+
+
             }
             else
             {
@@ -1021,6 +1032,7 @@ namespace UnityEngine.UI
             }
 
             Rect rect = GetPixelAdjustedRect();
+            //九宫格 中间循环的 区域 宽高
             float tileWidth = (spriteSize.x - border.x - border.z) / pixelsPerUnit;
             float tileHeight = (spriteSize.y - border.y - border.w) / pixelsPerUnit;
             border = GetAdjustedBorders(border / pixelsPerUnit, rect);
@@ -1043,7 +1055,7 @@ namespace UnityEngine.UI
 
             if (tileHeight <= 0)
                 tileHeight = yMax - yMin;
-
+            //有border 或者 图片不是 repeat ，或者图片不是图集中的一个
             if (activeSprite != null && (hasBorder || activeSprite.packed || activeSprite.texture.wrapMode != TextureWrapMode.Repeat))
             {
                 // Sprite has border, or is not in repeat mode, or cannot be repeated because of packing.
@@ -1054,6 +1066,7 @@ namespace UnityEngine.UI
 
                 long nTilesW = 0;
                 long nTilesH = 0;
+                //获取要 创建 几个 宽 以及 几个 高的  Quad 平面 （ 4个顶点 2个相连的三角面组成）
                 if (m_FillCenter)
                 {
                     nTilesW = (long)Math.Ceiling((xMax - xMin) / tileWidth);
@@ -1126,7 +1139,7 @@ namespace UnityEngine.UI
                         nTilesH = nTilesW = 0;
                     }
                 }
-
+                // 根据 宽高 数量    循环创建 九宫格中心 循环的  所有 Quad平面 
                 if (m_FillCenter)
                 {
                     // TODO: we could share vertices between quads. If vertex sharing is implemented. update the computation for the number of vertices accordingly.
@@ -1153,9 +1166,10 @@ namespace UnityEngine.UI
                         }
                     }
                 }
+                // 根据 宽高 数量    循环创建 九宫格 4角的   Quad平面 
                 if (hasBorder)
                 {
-                    clipped = uvMax;
+                    clipped = uvMax;  //九宫格 纵向 中部 循环
                     for (long j = 0; j < nTilesH; j++)
                     {
                         float y1 = yMin + j * tileHeight;
@@ -1180,7 +1194,7 @@ namespace UnityEngine.UI
                     }
 
                     // Bottom and top tiled border
-                    clipped = uvMax;
+                    clipped = uvMax;//九宫格 横向 中部 循环
                     for (long i = 0; i < nTilesW; i++)
                     {
                         float x1 = xMin + i * tileWidth;
@@ -1204,7 +1218,8 @@ namespace UnityEngine.UI
                             new Vector2(clipped.x, outer.w));
                     }
 
-                    // Corners
+
+                    // Corners  九宫格 4个角落 不变 
                     AddQuad(toFill,
                         new Vector2(0, 0) + rect.position,
                         new Vector2(xMin, yMin) + rect.position,
@@ -1231,7 +1246,7 @@ namespace UnityEngine.UI
                         new Vector2(outer.z, outer.w));
                 }
             }
-            else
+            else //图片是 repeat 
             {
                 // Texture has no border, is in repeat mode and not packed. Use texture tiling.
                 Vector2 uvScale = new Vector2((xMax - xMin) / tileWidth, (yMax - yMin) / tileHeight);
@@ -1311,7 +1326,7 @@ namespace UnityEngine.UI
 
             if (m_FillAmount < 0.001f)
                 return;
-
+            // 获取渲染uv的左下和右上角信息
             Vector4 v = GetDrawingDimensions(preserveAspect);
             Vector4 outer = activeSprite != null ? Sprites.DataUtility.GetOuterUV(activeSprite) : Vector4.zero;
             UIVertex uiv = UIVertex.simpleVert;
@@ -1321,7 +1336,8 @@ namespace UnityEngine.UI
             float ty0 = outer.y;
             float tx1 = outer.z;
             float ty1 = outer.w;
-
+            Debug.Log("sss:" + m_FillOrigin);
+            //横向 以及纵向的 渲染
             // Horizontal and vertical filled sprites are simple -- just end the Image prematurely
             if (m_FillMethod == FillMethod.Horizontal || m_FillMethod == FillMethod.Vertical)
             {
@@ -1367,6 +1383,7 @@ namespace UnityEngine.UI
             s_Uv[2] = new Vector2(tx1, ty1);
             s_Uv[3] = new Vector2(tx1, ty0);
 
+            // 角度的 绘制90   180  360 
             {
                 if (m_FillAmount < 1f && m_FillMethod != FillMethod.Horizontal && m_FillMethod != FillMethod.Vertical)
                 {
@@ -1498,15 +1515,15 @@ namespace UnityEngine.UI
                         }
                     }
                 }
-                else
+                else  //一般图形的绘制 
                 {
                     AddQuad(toFill, s_Xy, color, s_Uv);
                 }
             }
         }
 
-        /// <summary>
-        /// Adjust the specified quad, making it be radially filled instead.
+        /// <summary>  
+        /// Adjust the specified quad, making it be radially filled instead.     corner起始点
         /// </summary>
 
         static bool RadialCut(Vector3[] xy, Vector3[] uv, float fill, bool invert, int corner)
@@ -1528,26 +1545,31 @@ namespace UnityEngine.UI
             // Calculate the effective X and Y factors
             float cos = Mathf.Cos(angle);
             float sin = Mathf.Sin(angle);
-
+            //更新顶点坐标的 裁剪
             RadialCut(xy, cos, sin, invert, corner);
+            //更新uv坐标的 裁剪
             RadialCut(uv, cos, sin, invert, corner);
             return true;
         }
 
-        /// <summary>
+        /// <summary>//通过三角函数   算比例 Lerp 出 最终 所有构成quad 顶点的 位置信息
         /// Adjust the specified quad, making it be radially filled instead.
         /// </summary>
 
         static void RadialCut(Vector3[] xy, float cos, float sin, bool invert, int corner)
         {
+            
             int i0 = corner;
             int i1 = ((corner + 1) % 4);
             int i2 = ((corner + 2) % 4);
             int i3 = ((corner + 3) % 4);
 
+             //边角 为 
             if ((corner & 1) == 1)
             {
-                if (sin > cos)
+                // 在45° 前 的 sin 《 cos    // 以 最大边 为基准 ，两边 同时缩小同倍数（是 最大边 缩小倍 为 原始长度即可）
+
+                if (sin > cos)  //以 竖 y轴为基准 
                 {
                     cos /= sin;
                     sin = 1f;
@@ -1558,7 +1580,7 @@ namespace UnityEngine.UI
                         xy[i2].x = xy[i1].x;
                     }
                 }
-                else if (cos > sin)
+                else if (cos > sin)//以 x轴为基准 
                 {
                     sin /= cos;
                     cos = 1f;
